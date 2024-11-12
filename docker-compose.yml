@@ -27,15 +27,15 @@ services:
     container_name: tikv
     hostname: tikv
     ports:
-      - "20160:20160" # TiKV service port for TiDB/PD communication
-      - "20180:20180" # Status port for Prometheus scraping
+      - "20160:20160" # Service port for communication
+      - "20180:20180" # Status/metrics port for Prometheus scraping
     command:
-      - --pd-endpoints=pd:2379 # PD service address for TiKV to connect to PD
-      - --addr=0.0.0.0:20160 # Bind TiKV service endpoint to all interfaces (for inter-container communication)
-      - --advertise-addr=tikv:20160 # Advertise this address for external access within the Docker network
-      - --status-addr=0.0.0.0:20180 # Bind status endpoint for metrics scraping
+      - --pd-endpoints=pd:2379
+      - --addr=0.0.0.0:20160
+      - --advertise-addr=tikv:20160
+      - --status-addr=0.0.0.0:20180 # Ensure this is set correctly for metrics scraping
     depends_on:
-      - pd # Ensure PD is started before TiKV starts
+      - pd
     networks:
       - tidb_network
 
