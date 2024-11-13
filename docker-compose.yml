@@ -4,16 +4,16 @@ services:
     container_name: pd
     hostname: pd
     ports:
-      - "2379:2379" # Client URL for TiDB/TiKV communication
-      - "2380:2380" # Peer URL for PD communication in a cluster setup
+      - "2379:2379"
+      - "2380:2380"
     command:
       - --name=pd
       - --data-dir=/pd/data
-      - --client-urls=http://0.0.0.0:2379 # Bind client URL to all interfaces
-      - --peer-urls=http://0.0.0.0:2380 # Bind peer URL to all interfaces
-      - --advertise-client-urls=http://pd:2379 # Advertise client URL for other containers
-      - --advertise-peer-urls=http://pd:2380 # Advertise peer URL for PD peers
-      - --initial-cluster=pd=http://pd:2380 # Initial cluster configuration
+      - --client-urls=http://0.0.0.0:2379
+      - --peer-urls=http://0.0.0.0:2380
+      - --advertise-client-urls=http://pd:2379
+      - --advertise-peer-urls=http://pd:2380
+      - --initial-cluster=pd=http://pd:2380
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:2379/health"]
       interval: 30s
@@ -22,18 +22,52 @@ services:
     networks:
       - tidb_network
 
-  tikv:
+  tikv1:
     image: pingcap/tikv:latest
-    container_name: tikv
-    hostname: tikv
+    container_name: tikv1
+    hostname: tikv1
     ports:
-      - "20160:20160" # Service port for communication
-      - "20180:20180" # Status/metrics port for Prometheus scraping
+      - "20160:20160"
+      - "20180:20180"
     command:
       - --pd-endpoints=pd:2379
       - --addr=0.0.0.0:20160
-      - --advertise-addr=tikv:20160
-      - --status-addr=0.0.0.0:20180 # Ensure this is set correctly for metrics scraping
+      - --advertise-addr=tikv1:20160
+      - --status-addr=0.0.0.0:20180
+    depends_on:
+      - pd
+    networks:
+      - tidb_network
+
+  tikv2:
+    image: pingcap/tikv:latest
+    container_name: tikv2
+    hostname: tikv2
+    ports:
+      - "20260:20260"
+      - "20280:20280"
+    command:
+      - --pd-endpoints=pd:2379
+      - --addr=0.0.0.0:20260
+      - --advertise-addr=tikv2:20260
+      - --status-addr=0.0.0.0:20280
+    depends_on:
+      - pd
+    networks:
+      - tidb_network
+
+  tikv3:
+    image: pingcap/tikv:latest
+    container_name: tikv3
+    hostname: tikv3
+    ports:
+      - "20360:20360"
+      - "20380:20380"
+    command:
+      - --pd-endpoints=pd:2379
+      - --addr=0.0.0.0:20360
+      - --advertise-addr=tikv3:20360
+      - --status-addr=0.0.0.0:20380
     depends_on:
       - pd
     networks:
@@ -44,16 +78,18 @@ services:
     container_name: tidb
     hostname: tidb
     ports:
-      - "4000:4000" # SQL service port for client connections (MySQL-compatible)
-      - "10080:10080" # Status and metrics endpoint for Prometheus scraping
+      - "4000:4000"
+      - "10080:10080"
     command:
-      - --store=tikv # Use TiKV as the storage engine
-      - --path=pd:2379 # PD service address for TiDB to connect to PD
-      - --host=0.0.0.0 # Bind SQL service endpoint to all interfaces (for client connections)
-      - --status-host=0.0.0.0 # Bind status/metrics endpoint to all interfaces (for Prometheus scraping)
+      - --store=tikv
+      - --path=pd:2379
+      - --host=0.0.0.0
+      - --status-host=0.0.0.0
     depends_on:
-      - pd # Ensure PD is started before TiDB starts
-      - tikv # Ensure TiKV is started before TiDB starts
+      - pd
+      - tikv1
+      - tikv2
+      - tikv3
     networks:
       - tidb_network
 
@@ -62,13 +98,15 @@ services:
     container_name: prometheus
     hostname: prometheus
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml # Mount the Prometheus configuration file from the host machine.
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
-      - "9090:9090" # Prometheus UI port for monitoring and metrics scraping.
+      - "9090:9090"
     depends_on:
-      - pd # Ensure PD is started before Prometheus starts.
-      - tikv # Ensure TiKV is started before Prometheus starts.
-      - tidb # Ensure TiDB is started before Prometheus starts.
+      - pd
+      - tikv1
+      - tikv2
+      - tikv3
+      - tidb
     networks:
       - tidb_network
 
@@ -77,12 +115,12 @@ services:
     container_name: grafana
     hostname: grafana
     ports:
-      - "3000:3000" # Grafana UI port for dashboards.
+      - "3000:3000"
     depends_on:
-      - prometheus # Ensure Prometheus is started before Grafana starts.
+      - prometheus
     networks:
       - tidb_network
 
 networks:
   tidb_network:
-    driver: bridge # Use Docker's bridge network driver for inter-container communication.
+    driver: bridge
