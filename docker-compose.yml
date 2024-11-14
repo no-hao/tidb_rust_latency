@@ -121,6 +121,23 @@ services:
     networks:
       - tidb_network
 
+  jepsen-control:
+    build:
+      context: ./jepsen
+      dockerfile: Dockerfile
+    container_name: jepsen-control
+    privileged: true
+    volumes:
+      - ./jepsen/tests:/tests
+    networks:
+      - tidb_network
+    depends_on:
+      - tikv1
+      - tikv2
+      - tikv3
+      - pd
+      - tidb
+
 networks:
   tidb_network:
     driver: bridge

@@ -1,0 +1,166 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "Prometheus",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Raft Proposal Rate",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(tikv_raftstore_proposal_total{instance=~\"$instance\"}[1m])) by (instance)",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "description": "Rate of Raft proposals being made"
+    },
+    {
+      "title": "Raft Leader Count",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum(tikv_raftstore_region_count{instance=~\"$instance\", type=\"leader\"}) by (instance)",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "description": "Number of Raft leaders on each node"
+    },
+    {
+      "title": "Raft Message Receive/Send Rate",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(tikv_server_raft_message_recv_total{instance=~\"$instance\"}[1m])) by (instance)",
+          "legendFormat": "{{instance}} recv"
+        },
+        {
+          "expr": "sum(rate(tikv_server_raft_message_sent_total{instance=~\"$instance\"}[1m])) by (instance)",
+          "legendFormat": "{{instance}} send"
+        }
+      ],
+      "description": "Rate of Raft messages being sent and received"
+    },
+    {
+      "title": "Raft Process Duration",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(tikv_raftstore_process_duration_seconds_bucket{instance=~\"$instance\"}[1m])) by (le, instance))",
+          "legendFormat": "{{instance}} p99"
+        }
+      ],
+      "description": "Time taken to process Raft messages"
+    },
+    {
+      "title": "Raft Apply Log Duration",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(tikv_raftstore_apply_log_duration_seconds_bucket{instance=~\"$instance\"}[1m])) by (le, instance))",
+          "legendFormat": "{{instance}} p99"
+        }
+      ],
+      "description": "Time taken to apply Raft logs"
+    },
+    {
+      "title": "Raft Store Events",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(tikv_raftstore_event_duration_seconds_count{instance=~\"$instance\"}[1m])) by (instance, type)",
+          "legendFormat": "{{instance}} - {{type}}"
+        }
+      ],
+      "description": "Rate of different Raft store events"
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "type": "query",
+        "datasource": "Prometheus",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "query": "label_values(tikv_raftstore_proposal_total, instance)",
+        "current": {},
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "options": []
+      }
+    ]
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "refresh": "5s",
+  "schemaVersion": 22,
+  "style": "dark",
+  "tags": ["raft", "tikv"],
+  "title": "TiKV Raft Consensus Metrics",
+  "version": 1
+}
